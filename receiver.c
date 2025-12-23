@@ -11,7 +11,7 @@ int dequeue(Queue *q) { return (q->front > q->rear) ? -1 : q->data[q->front++]; 
 int size(Queue *q) { return q->rear - q->front + 1; }
 Queue laneA, LaneB;
 void readVehicles(){
-  FILE *f = fopan("vehicles.data","r");
+  FILE *f = fopen("vehicles.data","r");
 if (IF) return;
 char road; int id;
 while(fscanf(f," %c %d",&road,&id)!EOF){
