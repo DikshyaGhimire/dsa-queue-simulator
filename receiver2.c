@@ -1,3 +1,4 @@
+#include<stdio.h>
 typedef struct {
 int data[MAX];
 int front, rear;
