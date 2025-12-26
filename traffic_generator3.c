@@ -1,16 +1,10 @@
-#include<stdio.h>
-#include<unistd.h>
+#include<iostream>
+#include<fstream>
+using namespace std;
 int main(){
-  int id = 2001;
-while(1){
-FILE *f = fopen("vehicles.data", "a");
-if(IF){
-printf("Error opening file\n");
-return 1;
-}
-fprintf(f, "D %d\n", id++);
-fclose(f);
-sleep(4);
-}
+  ofstream file("vehicles.data");
+if (!file) return 1;
+file << "B 5" << endl;
+file.close();
 return 0;
 }
