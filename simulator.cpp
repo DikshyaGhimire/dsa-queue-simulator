@@ -1,60 +1,79 @@
 #include <SDL2/SDL.h>
 #include <iostream>
-#include <fstream>
 #include <queue>
-using namespace std;
-#define WIDTH 800
-#define HEIGHT 600
-#define PRIORITY_LIMIT 10
-struct lane{
-char name;
-int vehicles;
-};
-int main(){
-  // Read vehicle data
-  ifstream file("vehicles.data");
-if(!file){
-cout << "Error opening vehicles.data\n";
-return 1;
-}
-queue<lane> q;
-char lane;
-int count;
-while (file >> lane >> count){
-q.push({lane, count});
+#include <fstream>
+#include <vector>
+#include "common.h"
+const int VEHICLE_TIME = 500;
+std::queue<Vehicle> AL2[4];
+LightState lights[4] = {RED, RED, RED, RED};
+int currentRoad = 0;
+void loadlane(const char* filename, std::queue<Vehicle>& q){
+  std::ifstream file(filename);
+int id;
+while (file >> id){
+q.push({id});
 }
 file.close();
-SDL_Init(SDL_INIT_VIDEO);
-SDL_Window* window = SDL_CreateWindow(Traffic Light Simulator(DSA)", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
+}
+int getPriorityRoad(){
+  for(int i = 0; i < 4; i++){
+if(AL2[i].size() > 10)
+  return i;
+  }
+return -1;
+}
+void serveRoad(int road){
+  lights[road] = GREEN;
+int count = AL2[road].size();
+int serve = std::min(3, count);
+for(int i = 0; i < serve; i++){
+if(!AL2[road].empty()){
+AL2[road].pop();
+SDL_Delay(VEHICLE_TIME);
+}
+}
+lights[road] = RED;
+}
+void drawlights(SDL_Renderer* r){
+  SDL_SetRenderDrawColor(r, 0, 0, 0, 255);
+SDL_RenderClear(r);
+for(int i = 0; i < 4; i++){
+if(lights[i] == GREEN)
+  SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
+else
+  SDL_RenderDrawColor(r, 255, 0, 0, 255);
+SDL_Rect rect = {100 + i * 150, 250, 50, 50};
+SDL_RenderFillRect(r, &rect);
+}
+SDL_RenderPresent(r);
+}
+int main(){
+  SDL_Init(SDL_INIT_VIDEO);
+SDL_Window* window = SDL_CreateWindow("Traffic Junction Simulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
 SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+loadLane("laneA.txt", AL2[0]);
+loadLane("laneB.txt", AL2[1]);
+loadLane("laneC.txt", AL2[2]);
+loadLane("laneD.txt", AL2[3]);
 bool running = true;
-SDL_Event event;
-while(running && !q.empty()){
-lane current = q.front();
-q.pop();
-while (SDL_PollEvent(&event)){
-if (event.type == SDL_QUIT)
+SDL_Event e;
+while (running){
+while (SDL_PollEvent(&e)){
+if(e.type == SDL_QUIT)
   running = false;
 }
-SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-SDL_RenderClear(renderer);
-if(current.name == 'A' && current.vehicles > PRIORITY_LIMIT){
-SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-cout << "Priority lane A served("<< current.vehicles << "vehicles\n";
+int priority = getPriorityRoad();
+if(priority != -1){
+serveRoad(priority);
+} else{
+serveRoad(currentRoad);
+currentRoad = (currentRoad + 1) % 4;
 }
-else{
-SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-cout << "Serving lane" << current.name << "(" << current.vehicles << "vehicles)\n";
-}
-SDL_Rect light = {370, 200, 60, 150};
-SDL_RenderFillRect(renderer, &light);
-SDL_RenderPresent(renderer);
-SDL_Delay(1500);
+drawLights(renderer);
 }
 SDL_DestroyRenderer(renderer);
 SDL_DestroyWindow(window);
-SDL_QUIT();
-cout << "Simulation completed\n";
+SDL_Quit();
 return 0;
 }
-
